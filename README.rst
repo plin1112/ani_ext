@@ -2,13 +2,6 @@
 ANI_ext
 =======
 
-
-.. image:: https://img.shields.io/pypi/v/ani_ext.svg
-        :target: https://pypi.python.org/pypi/ani_ext
-
-.. image:: https://img.shields.io/travis/plin1112/ani_ext.svg
-        :target: https://travis-ci.com/plin1112/ani_ext
-
 .. image:: https://readthedocs.org/projects/ani-ext/badge/?version=latest
         :target: https://ani-ext.readthedocs.io/en/latest/?version=latest
         :alt: Documentation Status
@@ -22,11 +15,17 @@ Python interface to new ANI models
 * Free software: MIT license
 * Documentation: https://ani-ext.readthedocs.io.
 
+REQUIREMENTS
+--------
+
+* torch
+* torchani
+* ase
 
 Features
 --------
 
-* TODO
+* see examples for usage
 
 Credits
 -------
