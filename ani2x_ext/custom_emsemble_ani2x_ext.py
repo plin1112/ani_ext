@@ -9,6 +9,9 @@ import copy
 import os, sys
 from torchani import ase
 
+torch.backends.cuda.matmul.allow_tf32 = False
+torch.backends.cudnn.allow_tf32 = False
+
 # Borh length adopted from 2014 CODATA
 Bohr2Ang = 0.52917721067
 Ang2Bohr = 1. / Bohr2Ang

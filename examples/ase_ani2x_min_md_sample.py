@@ -16,7 +16,7 @@ calculator.
 
 ###############################################################################
 # To begin with, let's first import the modules we will use:
-from ase.lattice.cubic import Diamond
+# from ase.lattice.cubic import Diamond
 from ase.build import molecule
 from ase.md.langevin import Langevin
 from ase.optimize import BFGS
@@ -59,7 +59,7 @@ atoms.set_calculator(calculator)
 # Now let's minimize the structure:
 print(atoms.get_potential_energy())
 print("Begin minimizing...")
-opt = BFGS(atoms)
+opt = BFGS(atoms, trajectory='opt0.traj')
 opt.run(fmax=0.001)
 print()
 
@@ -77,8 +77,8 @@ def printenergy(a=atoms):
 ###############################################################################
 # We want to run MD with constant energy using the Langevin algorithm
 # with a time step of 1 fs, the temperature 300K and the friction
-# coefficient to 0.02 atomic units.
-dyn = Langevin(atoms, 1 * units.fs, temperature_K=300., friction=0.2)
+# coefficient to 0.2 atomic units.
+dyn = Langevin(atoms, 1 * units.fs, temperature_K=300., friction=0.2, trajectory='moldyn0.traj')
 dyn.attach(printenergy, interval=50)
 
 ###############################################################################
