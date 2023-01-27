@@ -42,7 +42,7 @@ if __name__ == "__main__":
     f_log.write('id, Model_Energy, Model_Stds\n')
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    my_model = CustomEnsemble(model_choice=1, periodic_table_index=False, return_option=1).to(device)
+    my_model = CustomEnsemble(model_choice=0, periodic_table_index=False, return_option=1).to(device)
 
     max_conf = 2000
 
@@ -76,6 +76,7 @@ if __name__ == "__main__":
             # forces = -torch.autograd.grad(ani2x_enes.sum(), i_coords, create_graph=True, retain_graph=True)[0]
             # hessian = torchani.utils.hessian(i_coords, forces=forces)
             enes = hartree2kcalmol(enes) 
+            ene_std = hartree2kcalmol(ene_std)
             energies.extend(enes.tolist())
             ene_stds.extend(ene_std.tolist())
             # all_forces.extend(torch.norm(forces, dim=-1).tolist())
@@ -91,6 +92,7 @@ if __name__ == "__main__":
             # forces = -torch.autograd.grad(ani2x_enes.sum(), i_coords, create_graph=True, retain_graph=True)[0]
             # hessian = torchani.utils.hessian(i_coords, forces=forces)
             enes = hartree2kcalmol(enes)
+            ene_std = hartree2kcalmol(ene_std)
             energies.extend(enes.tolist())
             ene_stds.extend(ene_std.tolist())
             # all_forces.extend(torch.norm(forces, dim=-1).tolist())

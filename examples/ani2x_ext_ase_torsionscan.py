@@ -13,7 +13,8 @@ import torchani
 from ani2x_ext.custom_emsemble_ani2x_ext import CustomEnsemble
 
 au2kcalmol = Hartree * mol / kcal
-ev2kcalmol = mol / kcal
+# ev2kcalmol = mol / kcal
+ev2kcalmol = 23.0609
 
 if __name__ == "__main__":
     import os
@@ -86,12 +87,12 @@ if __name__ == "__main__":
                 for j in range(mol.GetNumAtoms()):
                     x,y,z = system.positions[j]
                     conf.SetAtomPosition(j, Point3D(x,y,z))
-                mol.setProp('TORSION_ANGLE_SCAN', str(new_dihedral))
+                mol.SetProp('TORSION_ANGLE_SCAN', str(new_dihedral))
                 mol.SetProp('ANI2x_Ext Energy', str(system.get_potential_energy() * ev2kcalmol))
             except:
                 print('optimization failed')
                 new_dihedral = system.get_dihedral(*indices)
-                mol.setProp('TORSION_ANGLE_SCAN', str(new_dihedral))
+                mol.SetProp('TORSION_ANGLE_SCAN', str(new_dihedral))
                 mol.SetProp('ANI2x_Ext Energy', 'opt failed: ' + str(system.get_potential_energy() * ev2kcalmol))
 
             system.set_constraint()
