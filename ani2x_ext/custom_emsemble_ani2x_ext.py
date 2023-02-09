@@ -58,6 +58,28 @@ def exp_cutoff(d: Tensor, rc: Tensor) -> Tensor:
 
 torchani.aev.cutoff_cosine = exp_cutoff
 
+def distance_matrix(coordinates, pair_padding_mask, eps=1e-16):
+    """
+    Calculate distance matrix and replace padding by eps.
+    https://discuss.pytorch.org/t/efficient-distance-matrix-computation/9065/3
+
+    Arguments:
+        coordinates (torch.Tensor): (M, N, 3)
+        eps (float): to avoid devision by zeros
+    Returns:
+        distances (torch.Tensor): (M, N, N)
+    """
+    assert coordinates.dim() == 3
+    M, N, _ = coordinates.shape
+
+    eye = torch.eye(N).to(coordinates.device)
+    eps_shift = eps * (~ pair_padding_mask.to(torch.bool) + eye)
+    # (M, N, N) square tensor of (xi - xj)
+    diff = coordinates.unsqueeze(1) - coordinates.unsqueeze(2)
+    # eps_shift added to avoid nans when distances used in denomerator
+    distances = torch.sqrt(torch.sum(diff * diff, -1) + eps_shift)
+    return distances
+
 class CustomEnsemble(torch.nn.Module):
     """Use the picked model to Compute the average output of an ensemble of modules."""
     def __init__(self, periodic_table_index=True, return_option=0, model_choice=0, device=None):
@@ -256,31 +278,29 @@ class CustomEnsemble(torch.nn.Module):
         if species_coordinates[0].ge(self.aev_computer.num_species).any():
             raise ValueError(f'Unknown species found in {species_coordinates[0]}')
 
-        species, coordinates = species_coordinates
-        n_atoms = species.shape[-1]
-        coordinates_ = coordinates.flatten(0, 1)
         # calculate short-range repulsive energy
         if cell is None and pbc is None:
-            atom_index12 = torchani.aev.neighbor_pairs_nopbc(species == -1, coordinates, self.Rcr)
-            selected_coordinates = coordinates_.index_select(0, atom_index12.view(-1)).view(2, -1, 3)
-            vec = selected_coordinates[0] - selected_coordinates[1]
+            pass
         else:
-            assert (cell is not None and pbc is not None)
-            cutoff = max(self.Rcr, self.Rca)
-            shifts = torchani.aev.compute_shifts(cell, pbc, cutoff)
-            atom_index12, shifts = torchani.aev.neighbor_pairs(species == -1, coordinates, cell, shifts, self.Rcr)
-            shift_values = shifts.to(cell.dtype) @ cell
-            selected_coordinates = coordinates_.index_select(0, atom_index12.view(-1)).view(2, -1, 3)
-            vec = selected_coordinates[0] - selected_coordinates[1] + shift_values
+            sys.exit('PBC system not tested yet')
 
-        species_ = species.flatten()
-        species12 = species_[atom_index12]
-        distances = vec.norm(2, -1)
-
-        dist12 = distances * Ang2Bohr
-        krep = self.Mkrep[species12[0,:], species12[1,:]]
-        yeff = self.Myeff[species12[0,:], species12[1,:]]
-        alpha = self.Malpha[species12[0,:], species12[1,:]]
+        species, coordinates = species_coordinates
+        n_atoms = species.shape[-1]
+        # calculate short-range repulsive energy
+        mask = species.ne(-1)
+        padding_mask = mask.float()
+        pair_padding_mask = padding_mask.unsqueeze(1) * padding_mask.unsqueeze(2)
+        dmat = distance_matrix(coordinates, pair_padding_mask) # / a0  # Convert to A.U.
+        # dmat = torch.cdist(coordinates, coordinates)
+        # for older version of pytorch cdist may not work
+        # search for fast_cdist code online in this case
+        # dmat = fast_cdist(coordinates, coordinates)
+        pairs_all = torch.triu_indices(n_atoms, n_atoms, 1)
+        dist12 = dmat[:, pairs_all[0], pairs_all[1]] * Ang2Bohr
+        species12 = species[:, pairs_all]
+        krep = self.Mkrep[species12[:,0], species12[:,1]]
+        yeff = self.Myeff[species12[:,0], species12[:,1]]
+        alpha = self.Malpha[species12[:,0], species12[:,1]]
         rep_eng12 = ((yeff / dist12) * torch.exp(alpha * (dist12 ** krep))).sum(-1)
 
         species_aevs = self.aev_computer(species_coordinates, cell=cell, pbc=pbc)
