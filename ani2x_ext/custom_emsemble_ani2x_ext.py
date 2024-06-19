@@ -112,14 +112,28 @@ class CustomEnsemble(torch.nn.Module):
         EtaA = torch.tensor(aev_params['EtaA'], device=self.device)
         ShfA = torch.tensor(aev_params['ShfA'], device=self.device)
 
-        self.aev_computer = AEVComputer(self.Rcr, self.Rca, EtaR, ShfR, EtaA, Zeta, ShfA, ShfZ, self.num_species).to(self.device)
+        try:
+            self.aev_computer = AEVComputer(self.Rcr, self.Rca, EtaR, ShfR, EtaA, Zeta, ShfA, ShfZ, self.num_species, cutoff_fn='smooth').to(self.device)
+        except:
+            self.aev_computer = AEVComputer(self.Rcr, self.Rca, EtaR, ShfR, EtaA, Zeta, ShfA, ShfZ, self.num_species).to(self.device)
 
         self.number2tensor = torchani.nn.SpeciesConverter(self.species)
         self.species_to_tensor = torchani.utils.ChemicalSymbolsToInts(self.species)
 
         # Set up NN models 
         aev_dim = self.aev_computer.aev_length
-        anets = ANIModel(
+        if model_choice == 5:
+            anets = ANIModel(
+                [atomic_net([aev_dim, 256, 192, 160, 1]),  # H network
+                 atomic_net([aev_dim, 256, 192, 160, 1]),  # C network
+                 atomic_net([aev_dim, 192, 160, 128, 1]),  # N network
+                 atomic_net([aev_dim, 192, 160, 128, 1]),  # O network
+                 atomic_net([aev_dim, 160, 128, 96, 1]),  # F network
+                 atomic_net([aev_dim, 160, 128, 96, 1]),  # S network
+                 atomic_net([aev_dim, 160, 128, 96, 1])]  # Cl network
+            )
+        else:
+            anets = ANIModel(
                 [atomic_net([aev_dim, 256, 192, 160, 1]),  # H network
                  atomic_net([aev_dim, 224, 192, 160, 1]),  # C network
                  atomic_net([aev_dim, 192, 160, 128, 1]),  # N network
@@ -127,7 +141,7 @@ class CustomEnsemble(torch.nn.Module):
                  atomic_net([aev_dim, 160, 128, 96, 1]),  # F network
                  atomic_net([aev_dim, 160, 128, 96, 1]),  # S network
                  atomic_net([aev_dim, 160, 128, 96, 1])]  # Cl network
-        )
+            )
 
         # Set up model ensemble
         self.models = torch.nn.ModuleList()
@@ -237,6 +251,19 @@ class CustomEnsemble(torch.nn.Module):
                     [-0.496684906369, -37.824424218755, -54.576572487630, -75.058406925318, \
                      -99.725926489187, -398.084853327694, -460.116392553071])
 
+        elif self.model_choice == 5 or self.model_choice == "b973c_anid":
+            nnpath = nn_root + '/b973c_Ignacio/'
+            if not os.path.exists(nnpath): sys.exit('nnpath does not exist!')
+            self.pt_file_list = [nnpath+'anid_model_0.pt',
+                                 nnpath+'anid_model_1.pt',
+                                 nnpath+'anid_model_2.pt',
+                                 nnpath+'anid_model_3.pt',
+                                 nnpath+'anid_model_4.pt',
+                                 nnpath+'anid_model_5.pt',
+                                 nnpath+'anid_model_6.pt']
+            self.energy_shifter = EnergyShifter(
+                    [-0.5069, -37.8144, -54.5565, -75.0292, -398.0432, -99.6886, -460.0822])
+
         else:
             sys.exit("unknown model_choice for the CustomEnsemble.")
 
@@ -295,19 +322,25 @@ class CustomEnsemble(torch.nn.Module):
         # for older version of pytorch cdist may not work
         # search for fast_cdist code online in this case
         # dmat = fast_cdist(coordinates, coordinates)
+        n_mols = species.shape[0]
         pairs_all = torch.triu_indices(n_atoms, n_atoms, 1)
+        dist12_pair_mask = pair_padding_mask[:, pairs_all[0], pairs_all[1]] 
         dist12 = dmat[:, pairs_all[0], pairs_all[1]] * Ang2Bohr
         species12 = species[:, pairs_all]
         krep = self.Mkrep[species12[:,0], species12[:,1]]
         yeff = self.Myeff[species12[:,0], species12[:,1]]
         alpha = self.Malpha[species12[:,0], species12[:,1]]
-        rep_eng12 = ((yeff / dist12) * torch.exp(alpha * (dist12 ** krep))).sum(-1)
+        rep_eng12 = (yeff / dist12) * torch.exp(alpha * (dist12 ** krep))
+        rep_eng12 = rep_eng12 * dist12_pair_mask
+        rep_eng12 = rep_eng12.sum(-1)
 
         species_aevs = self.aev_computer(species_coordinates, cell=cell, pbc=pbc)
 
         energies = torch.stack([x(species_aevs)[1] for x in self.models])
         species, energies = self.energy_shifter(SpeciesEnergies(species, energies))
         energies += rep_eng12
+
+        print(rep_eng12)
 
         if self.return_option == 0:
             return SpeciesEnergies(species, energies.mean(0))

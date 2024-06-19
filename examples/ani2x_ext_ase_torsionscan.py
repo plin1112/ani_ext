@@ -27,7 +27,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     device = 'cuda'
-    my_model = CustomEnsemble(model_choice=4).to(device)
+    my_model = CustomEnsemble(model_choice=1).to(device)
 
     # calculator = torchani.models.ANI2x().ase()
     calculator = my_model.ase()
