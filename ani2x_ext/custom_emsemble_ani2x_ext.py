@@ -340,8 +340,6 @@ class CustomEnsemble(torch.nn.Module):
         species, energies = self.energy_shifter(SpeciesEnergies(species, energies))
         energies += rep_eng12
 
-        print(rep_eng12)
-
         if self.return_option == 0:
             return SpeciesEnergies(species, energies.mean(0))
         elif self.return_option == 1:
