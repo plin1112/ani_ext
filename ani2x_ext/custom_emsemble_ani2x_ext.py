@@ -175,7 +175,7 @@ class CustomEnsemble(torch.nn.Module):
 
     def get_model_info(self):
         # set up models based on the model_choice
-        nn_root = os.path.dirname(os.path.abspath(__file__))
+        nn_root = os.path.dirname(os.path.abspath(''))
         if self.model_choice == 0 or self.model_choice == "ani2x_n1c":
             nnpath = nn_root + '/ANI2x_n1c_models/'
             if not os.path.exists(nnpath): sys.exit('nnpath does not exist!')
