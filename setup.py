@@ -13,6 +13,10 @@ setup(
     license='Apache License 2.0',
     author_email='plin1112@ufl.edu',
     packages=find_packages(),
+    package_data= {
+        # all .pt files at any package depth
+        '': ['**/*.pt'],
+    },
     use_scm_version=True,
     setup_requires=['setuptools_scm']
 )
