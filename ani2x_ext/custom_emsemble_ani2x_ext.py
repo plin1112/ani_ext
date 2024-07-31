@@ -175,9 +175,9 @@ class CustomEnsemble(torch.nn.Module):
 
     def get_model_info(self):
         # set up models based on the model_choice
-        nn_root = os.path.dirname(os.path.abspath(''))
+        nn_root = os.path.dirname(os.path.abspath(__file__))
         if self.model_choice == 0 or self.model_choice == "ani2x_n1c":
-            nnpath = nn_root + '/ANI2x_n1c_models/'
+            nnpath = os.path.join(nn_root, '/ANI2x_n1c_models/')
             if not os.path.exists(nnpath): sys.exit('nnpath does not exist!')
             self.pt_file_list = [nnpath+'ani2x_gelu_expc_nc1e1_best_nn.pt',
                                  nnpath+'ani2x_gelu_expc_nc1e2_best_nn.pt',
@@ -192,7 +192,7 @@ class CustomEnsemble(torch.nn.Module):
                      -99.6949007172, -398.081416857, -460.116700576]).to(self.device)
 
         elif self.model_choice == 1 or self.model_choice == "r2s_o0":
-            nnpath = nn_root + '/r2s_o0_models/'
+            nnpath = os.path.join(nn_root, '/r2s_o0_models/')
             if not os.path.exists(nnpath): sys.exit('nnpath does not exist!')
             self.pt_file_list = [nnpath+'ani2x_gelu_expc_r2s_o0_1_best.pt',
                                  nnpath+'ani2x_gelu_expc_r2s_o0_2_best.pt',
@@ -207,7 +207,7 @@ class CustomEnsemble(torch.nn.Module):
                      -99.726350798961, -398.080971275720, -460.113993263966])
 
         elif self.model_choice == 2 or self.model_choice == "r2s_o0water":
-            nnpath = nn_root + '/r2s_o0water_models/'
+            nnpath = os.path.join(nn_root, '/r2s_o0water_models/')
             if not os.path.exists(nnpath): sys.exit('nnpath does not exist!')
             self.pt_file_list = [nnpath+'ani2x_gelu_expc_r2s_o0water_1_best.pt',
                                  nnpath+'ani2x_gelu_expc_r2s_o0water_2_best.pt',
@@ -222,7 +222,7 @@ class CustomEnsemble(torch.nn.Module):
                      -99.724273365141, -398.082828534447, -460.113806300624])
 
         elif self.model_choice == 3 or self.model_choice == "r2s_o0chcl3":
-            nnpath = nn_root + '/r2s_o0chcl3_models/'
+            nnpath = os.path.join(nn_root, '/r2s_o0chcl3_models/')
             if not os.path.exists(nnpath): sys.exit('nnpath does not exist!')
             self.pt_file_list = [nnpath+'ani2x_gelu_expc_r2s_o0chcl3_1_best.pt',
                                  nnpath+'ani2x_gelu_expc_r2s_o0chcl3_2_best.pt',
@@ -237,7 +237,7 @@ class CustomEnsemble(torch.nn.Module):
                      -99.726146486046, -398.085456915563, -460.116926115444])
 
         elif self.model_choice == 4 or self.model_choice == "r2s_o0ch3cn":
-            nnpath = nn_root + '/r2s_o0ch3cn_models/'
+            nnpath = os.path.join(nn_root, '/r2s_o0ch3cn_models/')
             if not os.path.exists(nnpath): sys.exit('nnpath does not exist!')
             self.pt_file_list = [nnpath+'ani2x_gelu_expc_r2s_o0ch3cn_1_best.pt',
                                  nnpath+'ani2x_gelu_expc_r2s_o0ch3cn_2_best.pt',
@@ -252,7 +252,7 @@ class CustomEnsemble(torch.nn.Module):
                      -99.725926489187, -398.084853327694, -460.116392553071])
 
         elif self.model_choice == 5 or self.model_choice == "b973c_anid":
-            nnpath = nn_root + '/b973c_Ignacio/'
+            nnpath = os.path.join(nn_root, '/b973c_Ignacio/')
             if not os.path.exists(nnpath): sys.exit('nnpath does not exist!')
             self.pt_file_list = [nnpath+'anid_model_0.pt',
                                  nnpath+'anid_model_1.pt',
